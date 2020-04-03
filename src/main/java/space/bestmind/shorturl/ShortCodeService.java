@@ -12,20 +12,40 @@ import java.util.Optional;
  */
 @Service
 public final class ShortCodeService {
-	
-	private final Map<String,String> CACHE= new HashMap<>();
-	
-	public String getShortCode(String url){
-		String hashString = hashString(url);
-		CACHE.put(hashString, url);
-		return hashString;
-	}
-	
-	public String getOriginUrl(String code){
-		return CACHE.get(code);
-	}
-	
-	private String hashString(String s){
-		return Optional.ofNullable(s).map(String::hashCode).map(Integer::toHexString).map(String::valueOf).orElse(null);
-	}
+
+    private static final int LENGTH = 6;
+    private static final char[] DICTIONARY = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D',
+            'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y',
+            'Z', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't',
+            'u', 'v', 'w', 'x', 'y', 'z' };
+    private final Map<String, String> CACHE = new HashMap<>();
+
+    public String getShortCode(String url) {
+        String hashString = generateShortCode(url);
+        CACHE.put(hashString, url);
+        return hashString;
+    }
+
+    public String getOriginUrl(String code) {
+        return CACHE.get(code);
+    }
+
+    private String generateShortCode(String s) {
+        return Optional.ofNullable(s).map(String::hashCode).map(this::transHashCode).map(String::valueOf).orElse(null);
+    }
+
+    private String transHashCode(int hashCode) {
+        long unsignedHashCode = Integer.toUnsignedLong(hashCode);
+        char[] temp = new char[] { 0, 0, 0, 0, 0, 0 };
+        int start = LENGTH - 1;
+        while (unsignedHashCode > 0) {
+            temp[start] = DICTIONARY[(int) (unsignedHashCode % 62)];
+            unsignedHashCode /= 62;
+            start--;
+        }
+        for (; start >= 0; start--) {
+            temp[start] = '0';
+        }
+        return String.valueOf(temp);
+    }
 }
